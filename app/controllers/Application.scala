@@ -4,6 +4,10 @@ import play.api._
 import play.api.mvc._
 import play.api.data._
 import play.api.data.Forms._
+import play.api.libs.functional.syntax._
+import play.api.libs.iteratee._
+import play.api.libs.json._
+import play.api.libs.EventSource
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util._
 
@@ -19,6 +23,11 @@ object Application extends Controller {
         Ok(views.html.index(msgs))
       }
     }
+  }
+
+  def listen = Action { implicit request =>
+    implicit val format = MessageJsonFormat
+    Ok.feed(Message.enumerate &> Json.toJson ><> EventSource()).as("text/event-stream")
   }
 
   val msgForm = Form(single(
@@ -38,6 +47,25 @@ object Application extends Controller {
             case Failure(e) =>
               Logger.error("Error during creation", e)
               InternalServerError("Internal error")
+          }
+        }
+      }
+    )
+  }
+
+  def sendMessageAsync = Action { implicit request =>
+    msgForm.bindFromRequest.fold(
+      err => {
+        BadRequest(Json.obj("error" -> "Bad request"))
+      },
+      text => {
+        Async {
+          Message.create(text).map {
+            case Success(_) =>
+              Created(Json.obj())
+            case Failure(e) =>
+              Logger.error("Error during creation", e)
+              InternalServerError(Json.obj("error" -> "Internal error"))
           }
         }
       }

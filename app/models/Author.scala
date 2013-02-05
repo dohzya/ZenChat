@@ -3,6 +3,7 @@ package models
 import play.api.Play.current
 import play.api._
 import play.modules.reactivemongo._
+import play.modules.reactivemongo.PlayBsonImplicits._
 import reactivemongo.api._
 import reactivemongo.bson._
 import reactivemongo.bson.handlers.DefaultBSONHandlers._

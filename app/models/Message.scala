@@ -3,6 +3,9 @@ package models
 import org.joda.time._
 import play.api.Play.current
 import play.api._
+import play.api.libs.iteratee._
+import play.api.libs.json._
+import play.modules.reactivemongo.PlayBsonImplicits._
 import play.modules.reactivemongo._
 import reactivemongo.api._
 import reactivemongo.bson._
@@ -21,6 +24,7 @@ case class Message(
 object Message {
   val db = ReactiveMongoPlugin.db
   lazy val collection = db("messages")
+  collection.createCapped(size = 100L, maxDocuments = Some(1000))
 
   def apply(text: String)(implicit author: User): Message = {
     Message(
@@ -35,13 +39,21 @@ object Message {
 
   def insert(msg: Message): Future[Try[Unit]] = {
     implicit val handler = MessageBsonHandler
-    collection.insert(msg).map{ r => if (r.ok) Success(r) else Failure(r) }
+    collection.insert(msg).map{ res =>
+      if (res.ok) Success(()) else Failure(res)
+    }
   }
 
   def all: Future[Seq[Message]] = {
     val query = BSONDocument()
     implicit val handler = MessageBsonHandler
-    collection.find[Message](QueryBuilder(queryDoc = Some(query))).toList
+    collection.find[Message](QueryBuilder().query(query)).toList
+  }
+
+  def enumerate: Enumerator[Message] = {
+    val query = BSONDocument()
+    implicit val handler = MessageBsonHandler
+    collection.find[Message](QueryBuilder().query(query), QueryOpts().tailable.awaitData).enumerate
   }
 
 }
@@ -69,4 +81,24 @@ object MessageBsonHandler extends BSONReader[Message] with BSONWriter[Message] {
       "date" -> BSONDateTime(o.date.getMillis)
     )
   }
+}
+
+object MessageJsonFormat extends Format[Message] {
+  def reads(json: JsValue) = JsSuccess(Message(
+    id = BSONObjectID((json \ "id").as[String]),
+    author = User(
+      name = (json \ "author" \ "name").as[String]
+    ),
+    text = (json \ "text").as[String],
+    date = (json \ "date").as[DateTime]
+  ))
+  def writes(o: Message): JsValue = Json.obj(
+    "id" -> o.id.stringify,
+    "author" -> Json.obj(
+      "name" -> o.author.name,
+      "avatar" -> "http://lorempixel.com/32/32/"
+    ),
+    "text" -> o.text,
+    "date" -> Json.toJson(o.date)
+  )
 }
