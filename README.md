@@ -4,7 +4,7 @@ ZenChat is a Web chat designer to replace IRC
 
 ## Todo
 
-[ ] Stop using capped collections
+[x] Stop using capped collections
     - use only iteratee-system for RT messages
 [ ] Multi-channel
 [ ] OAuth (google)

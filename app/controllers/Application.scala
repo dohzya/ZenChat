@@ -25,51 +25,12 @@ object Application extends Controller {
     }
   }
 
-  def listen = Action { implicit request =>
-    implicit val format = MessageJsonFormat
-    Ok.feed(Message.enumerate &> Json.toJson ><> EventSource()).as("text/event-stream")
-  }
-
-  val msgForm = Form(single(
-    "text" -> nonEmptyText
-  ))
-
-  def sendMessage = Action { implicit request =>
-    msgForm.bindFromRequest.fold(
-      err => {
-        Redirect(routes.Application.index)
-      },
-      text => {
-        Async {
-          Message.create(text).map {
-            case Success(_) =>
-              Redirect(routes.Application.index)
-            case Failure(e) =>
-              Logger.error("Error during creation", e)
-              InternalServerError("Internal error")
-          }
-        }
-      }
-    )
-  }
-
-  def sendMessageAsync = Action { implicit request =>
-    msgForm.bindFromRequest.fold(
-      err => {
-        BadRequest(Json.obj("error" -> "Bad request"))
-      },
-      text => {
-        Async {
-          Message.create(text).map {
-            case Success(_) =>
-              Created(Json.obj())
-            case Failure(e) =>
-              Logger.error("Error during creation", e)
-              InternalServerError(Json.obj("error" -> "Internal error"))
-          }
-        }
-      }
-    )
+  var i = 0  // ugly for works for quick tests :-)
+  def chat = WebSocket.async[JsValue] { request  =>
+    i = i+1
+    val username = s"toto$i"
+    Logger.debug(s"chat ($username)")
+    models.ChatRoom.join(username)
   }
 
 }

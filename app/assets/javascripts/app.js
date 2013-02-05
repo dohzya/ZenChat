@@ -3,32 +3,27 @@ window.ZenChat = (function(){
 
   var ZC = {
     input: null,
-    source: null
+    socket: null
   };
 
   ZC.initAjaxPost = function() {
     $("#input-form").submit(function(e){
       e.preventDefault();
-      $.ajax({
-        type: "POST",
-        url: "/message",
-        data: {
-          "text": ZC.input.val()
-        },
-        success: function(data, textStatus, jqXHR){
-          ZC.input.val("");
-        },
-        dataType: "json"
+      ZC.send({
+        "message": ZC.input.val()
       });
+      ZC.input.val("");
     });
   };
 
-  ZC.initServerSentEvents = function() {
-    ZC.source = new EventSource('/listen');
-    ZC.source.addEventListener('message', function(e) {
-      console.log(data);
-      var data = JSON.parse(e.data);
-      console.log(data);
+  ZC.send = function(msg) {
+    ZC.socket.send(JSON.stringify(msg));
+  }
+
+  ZC.initSocket = function(socket) {
+    ZC.socket = socket;
+    ZC.socket.onmessage = function(event) {
+      var data = JSON.parse(event.data);
       var fragment = '<article class="message" data-id="' + data.id + '">' +
          '<header>' +
            '<div class="nickname">'+data.author.name+'</div>' +
@@ -41,27 +36,17 @@ window.ZenChat = (function(){
            '<div class="time">'+data.date+'</div>' +
          '</footer>' +
        '</article>';
-       console.log(fragment);
       $("#messages").append(fragment);
-    }, false);
-
-    ZC.source.addEventListener('open', function(e) {
-      // Connection was opened.
-    }, false);
-
-    ZC.source.addEventListener('error', function(e) {
-      if (e.readyState == EventSource.CLOSED) {
-        // Connection was closed.
-      }
-    }, false);
+    };
+    ZC.socket.onopen = function(event) {};
+    ZC.socket.onclose = function(event) {};
+    ZC.socket.onerror = function(event) {};
   };
 
-  ZC.init = function(){
+  ZC.init = function(socket){
     ZC.input = $("#input");
-    if (!!window.EventSource) {
-      ZC.initServerSentEvents();
-      ZC.initAjaxPost();
-    }
+    ZC.initSocket(socket);
+    ZC.initAjaxPost();
   };
   return ZC;
 })();

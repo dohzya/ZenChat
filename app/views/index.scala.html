@@ -1,4 +1,4 @@
-@(msgs: Seq[Message])(implicit lang: Lang)
+@(msgs: Seq[Message])(implicit lang: Lang, request: RequestHeader)
 
 @import presenters._
 
@@ -13,7 +13,7 @@
     </ul>
   </nav>
   <section id="messages" class="messages">
-  @*for(msg <- msgs.map(MessagePresenter(_))) {
+  @for(msg <- msgs.map(MessagePresenter(_))) {
     <article class="message" data-id="@msg.id">
       <header>
         <div class="nickname">@msg.author</div>
@@ -26,7 +26,7 @@
         <div class="time">@msg.date</div>
       </footer>
     </article>
-  }*@
+  }
   </section>
   <section class="input row-fluid">
     <form id="input-form" action="/messages" method="POST" autocomplete="off">
