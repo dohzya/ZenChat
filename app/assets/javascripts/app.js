@@ -9,7 +9,6 @@ window.ZenChat = (function(){
   ZC.initAjaxPost = function() {
     $("#input-form").submit(function(e){
       e.preventDefault();
-      var data =
       $.ajax({
         type: "POST",
         url: "/message",
