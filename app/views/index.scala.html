@@ -1,7 +1,42 @@
-@(message: String)
+@(msgs: Seq[Message])(implicit lang: Lang)
 
-@main("Welcome to Play 2.1") {
-    
-    @play20.welcome(message)
-    
+@import presenters._
+
+@main("ZenChat") {
+
+  <header>
+    <h1><a href="#">ZenChat</a></h1>
+  </header>
+  <nav>
+    <ul>
+      <li><a href="#">Home</a></li>
+    </ul>
+  </nav>
+  <section class="messages">
+  @for(msg <- msgs.map(MessagePresenter(_))) {
+    <article class="message" data-id="@msg.id">
+      <header>
+        <div class="nickname">@msg.author</div>
+        <div class="avatar"><img src="@msg.avatar" class="img-rounded" alt="@msg.author" /></div>
+      </header>
+      <section>
+        <p>@msg.text</p>
+      </section>
+      <footer>
+        <div class="time">@msg.date</div>
+      </footer>
+    </article>
+  }
+  </section>
+  <section class="input row-fluid">
+    <form action="/messages" method="POST" autocomplete="off">
+      <div class="input-append span10 offset1">
+        <input class="span11" name="text" id="input" autofocus="true" type="text">
+        <button class="btn" type="button">Send!</button>
+      </div>
+    </form>
+  </section>
+  <footer class="main-footer">
+    <p>Copyright © 2013 All Rights</p>
+  </footer>
 }
