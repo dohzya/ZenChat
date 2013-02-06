@@ -61,12 +61,9 @@ object Message {
 object MessageBsonHandler extends BSONReader[Message] with BSONWriter[Message] {
   def fromBSON(document: BSONDocument): Message = {
     val doc = document.toTraversable
-    val docUser = doc.getAs[BSONDocument]("author").get.toTraversable
     Message(
       id = doc.getAs[BSONObjectID]("_id").get,
-      author = User(
-        docUser.getAs[BSONString]("name").get.value
-      ),
+      author = UserBsonHandler.fromBSON(doc.getAs[BSONDocument]("author").get),
       text = doc.getAs[BSONString]("text").get.value,
       date = new DateTime(doc.getAs[BSONDateTime]("date").get.value)
     )
@@ -74,9 +71,7 @@ object MessageBsonHandler extends BSONReader[Message] with BSONWriter[Message] {
   def toBSON(o: Message): BSONDocument = {
     BSONDocument(
       "_id" -> o.id,
-      "author" -> BSONDocument(
-        "name" -> BSONString(o.author.name)
-      ),
+      "author" -> UserBsonHandler.toBSON(o.author),
       "text" -> BSONString(o.text),
       "date" -> BSONDateTime(o.date.getMillis)
     )
@@ -84,20 +79,17 @@ object MessageBsonHandler extends BSONReader[Message] with BSONWriter[Message] {
 }
 
 object MessageJsonFormat extends Format[Message] {
-  def reads(json: JsValue) = JsSuccess(Message(
-    id = BSONObjectID((json \ "id").as[String]),
-    author = User(
-      name = (json \ "author" \ "name").as[String]
-    ),
-    text = (json \ "text").as[String],
-    date = (json \ "date").as[DateTime]
-  ))
+  def reads(json: JsValue) = UserJsonFormat.reads(json \ "author").flatMap { author =>
+    JsSuccess(Message(
+      id = BSONObjectID((json \ "id").as[String]),
+      author = author,
+      text = (json \ "text").as[String],
+      date = (json \ "date").as[DateTime]
+    ))
+  }
   def writes(o: Message): JsValue = Json.obj(
     "id" -> o.id.stringify,
-    "author" -> Json.obj(
-      "name" -> o.author.name,
-      "avatar" -> "http://lorempixel.com/32/32/"
-    ),
+    "author" -> UserJsonFormat.writes(o.author),
     "text" -> o.text,
     "date" -> Json.toJson(o.date)
   )

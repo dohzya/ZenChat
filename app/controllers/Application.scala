@@ -9,15 +9,15 @@ import play.api.libs.iteratee._
 import play.api.libs.json._
 import play.api.libs.EventSource
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent._
+import scala.concurrent.duration._
 import scala.util._
 
 import models._
 
-object Application extends Controller {
+object Application extends Controller with Authentication {
 
-  implicit def author = User("bob")
-
-  def index = Action { implicit request =>
+  def index = Authenticated { implicit user => implicit request =>
     Async {
       Message.all.map { msgs =>
         Ok(views.html.index(msgs))
@@ -25,12 +25,11 @@ object Application extends Controller {
     }
   }
 
-  var i = 0  // ugly for works for quick tests :-)
-  def chat = WebSocket.async[JsValue] { request  =>
-    i = i+1
-    val username = s"toto$i"
-    Logger.debug(s"chat ($username)")
-    models.ChatRoom.join(username)
+  def chat = WebSocket.async[JsValue] { implicit request =>
+    authenticated[Future[(Iteratee[JsValue,_], Enumerator[JsValue])]] { user =>
+      Logger.debug(s"chat ($user)")
+      models.ChatRoom.join(user)
+    }.flatMap(_.getOrElse { throw new java.lang.RuntimeException("Not authenticated") })
   }
 
 }

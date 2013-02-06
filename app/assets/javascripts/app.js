@@ -27,7 +27,7 @@ window.ZenChat = (function(){
       var fragment = '<article class="message" data-id="' + data.id + '">' +
          '<header>' +
            '<div class="nickname">'+data.author.name+'</div>' +
-           '<div class="avatar"><img src="'+data.author.avatar+'" class="img-rounded" alt="'+data.author.name+'" /></div>' +
+           '<div class="avatar"><img src="'+data.author.picture+'" class="img-rounded" alt="'+data.author.name+'" /></div>' +
          '</header>' +
          '<section>' +
            '<p>'+data.text+'</p>' +

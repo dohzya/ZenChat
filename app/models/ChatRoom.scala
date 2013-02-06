@@ -24,8 +24,7 @@ object ChatRoom {
     roomActor
   }
 
-  def join(username:String): Future[(Iteratee[JsValue,_], Enumerator[JsValue])] = {
-    val user = User(username)
+  def join(user: User): Future[(Iteratee[JsValue,_], Enumerator[JsValue])] = {
     (default ? Join(user)).map {
 
       case Connected(enumerator) =>

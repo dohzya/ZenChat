@@ -15,6 +15,6 @@ case class MessagePresenter(msg: Message) extends AnyVal {
 
   def text: String = msg.text
 
-  def avatar: String = "http://lorempixel.com/32/32/"
+  def avatar: String = msg.author.picture
 
 }
