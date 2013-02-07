@@ -2,6 +2,7 @@ package controllers
 
 import java.net.URLEncoder
 import org.joda.time.DateTime
+import play.api.Play.current
 import play.api._
 import play.api.mvc._
 import play.api.libs.ws._
@@ -56,15 +57,16 @@ object Authentication extends Controller {
   case class OAuthErrorJson(content: JsValue) extends OauthError
   case class OAuthErrorResult(content: Result) extends OauthError
 
-  val AuthProviderX509CertUrl = "https://www.googleapis.com/oauth2/v1/certs"
-  val AuthURI = "https://accounts.google.com/o/oauth2/auth"
-  val ClientEmail = "771660049335@developer.gserviceaccount.com"
-  val ClientId = "771660049335.apps.googleusercontent.com"
-  val ClientSecret = "Z2FXYku49-VwJVV4dLLMuwW6"
-  val ClientX509CertUrl = "https://www.googleapis.com/robot/v1/metadata/x509/771660049335@developer.gserviceaccount.com"
-  val JavascriptOrigin = "http://localhost:9100"
-  val RedirectURI = "http://localhost:9100/oauth2callback"
-  val TokenURI = "https://accounts.google.com/o/oauth2/token"
+  lazy val conf = current.configuration.getConfig("oauth2").get
+  lazy val AuthProviderX509CertUrl = conf.getString("authproviderx509certurl").get
+  lazy val AuthURI = conf.getString("authuri").get
+  lazy val ClientEmail = conf.getString("clientemail").get
+  lazy val ClientId = conf.getString("clientid").get
+  lazy val ClientSecret = conf.getString("clientsecret").get
+  lazy val ClientX509CertUrl = conf.getString("clientx509certurl").get
+  lazy val JavascriptOrigin = conf.getString("javascriptorigin").get
+  lazy val RedirectURI = conf.getString("redirecturi").get
+  lazy val TokenURI = conf.getString("tokenuri").get
 
   val scopes = Seq(
     "https://www.googleapis.com/auth/userinfo.email",
