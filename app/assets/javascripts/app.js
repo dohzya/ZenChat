@@ -26,6 +26,7 @@ window.ZenChat = (function(){
     ZC.socket = socket;
     ZC.socket.onmessage = function(event) {
       var data = JSON.parse(event.data);
+      var date = new Date(data.date);
       var fragment = '<article class="message" data-id="' + data.id + '">' +
          '<header>' +
            '<div class="nickname">'+data.author.name+'</div>' +
@@ -35,7 +36,7 @@ window.ZenChat = (function(){
            '<p>'+data.text+'</p>' +
          '</section>' +
          '<footer>' +
-           '<div class="time">'+data.date+'</div>' +
+           '<div class="time">'+date.getHours()+':'+date.getMinutes()+'</div>' +
          '</footer>' +
        '</article>';
       $("#messages").append(fragment);
