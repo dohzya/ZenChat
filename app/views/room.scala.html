@@ -7,11 +7,6 @@
   <header>
     <h1><a href="/">ZenChat</a></h1>
   </header>
-  <nav>
-    <ul>
-      <li><a href="@routes.Application.index">Home</a></li>
-    </ul>
-  </nav>
   <section id="messages" class="messages">
   @for(msg <- msgs.map(MessagePresenter(_))) {
     <article class="message" data-id="@msg.id">

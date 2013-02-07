@@ -8,17 +8,10 @@
     <h1><a href="/">ZenChat</a></h1>
   </header>
   <nav>
-    <ul>
-      <li><a href="#">Home</a></li>
-    </ul>
+    <ul>@for(room <- rooms) {
+      <li><a href="@routes.Application.room(room)">@room</a></li>
+    }</ul>
   </nav>
-  <section id="rooms" class="rooms">
-  @for(room <- rooms) {
-    <article class="room" data-name="@room">
-      <a href="@routes.Application.room(room)">@room</a>
-    </article>
-  }
-  </section>
   <footer class="main-footer">
     <p>Copyright © 2013 All Rights</p>
   </footer>
