@@ -21,9 +21,7 @@
         @content
         <script type="text/javascript">
             $(function(){
-                var WS = window['MozWebSocket'] ? MozWebSocket : WebSocket
-                var socket = new WS("@routes.Application.chat().webSocketURL()")
-                window.ZenChat.init(socket);
+                window.ZenChat.init();
             });
         </script>
     </body>

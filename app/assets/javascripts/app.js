@@ -7,6 +7,7 @@ window.ZenChat = (function(){
   };
 
   ZC.initAjaxPost = function() {
+    ZC.input = $("#input");
     $("#input-form").submit(function(e){
       e.preventDefault();
       ZC.send({
@@ -20,7 +21,8 @@ window.ZenChat = (function(){
     ZC.socket.send(JSON.stringify(msg));
   }
 
-  ZC.initSocket = function(socket) {
+  ZC.initSocket = function(roomName, socket) {
+    ZC.roomName = roomName;
     ZC.socket = socket;
     ZC.socket.onmessage = function(event) {
       var data = JSON.parse(event.data);
@@ -43,10 +45,6 @@ window.ZenChat = (function(){
     ZC.socket.onerror = function(event) {};
   };
 
-  ZC.init = function(socket){
-    ZC.input = $("#input");
-    ZC.initSocket(socket);
-    ZC.initAjaxPost();
-  };
+  ZC.init = function(){};
   return ZC;
 })();

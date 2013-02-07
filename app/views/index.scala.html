@@ -1,4 +1,4 @@
-@(msgs: Seq[Message])(implicit lang: Lang, request: RequestHeader)
+@(rooms: Seq[String])(implicit lang: Lang, request: RequestHeader)
 
 @import presenters._
 
@@ -12,29 +12,12 @@
       <li><a href="#">Home</a></li>
     </ul>
   </nav>
-  <section id="messages" class="messages">
-  @for(msg <- msgs.map(MessagePresenter(_))) {
-    <article class="message" data-id="@msg.id">
-      <header>
-        <div class="nickname">@msg.author</div>
-        <div class="avatar"><img src="@msg.avatar" class="img-rounded" alt="@msg.author" /></div>
-      </header>
-      <section>
-        <p>@msg.text</p>
-      </section>
-      <footer>
-        <div class="time">@msg.date</div>
-      </footer>
+  <section id="rooms" class="rooms">
+  @for(room <- rooms) {
+    <article class="room" data-name="@room">
+      <a href="@routes.Application.room(room)">@room</a>
     </article>
   }
-  </section>
-  <section class="input row-fluid">
-    <form id="input-form" action="/messages" method="POST" autocomplete="off">
-      <div class="input-append span10 offset1">
-        <input class="span11" name="text" id="input" autofocus="true" type="text">
-        <button class="btn" type="button">Send!</button>
-      </div>
-    </form>
   </section>
   <footer class="main-footer">
     <p>Copyright © 2013 All Rights</p>

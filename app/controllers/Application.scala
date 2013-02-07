@@ -1,5 +1,6 @@
 package controllers
 
+import akka.pattern.ask
 import play.api._
 import play.api.mvc._
 import play.api.data._
@@ -19,16 +20,25 @@ object Application extends Controller with Authentication {
 
   def index = Authenticated { implicit user => implicit request =>
     Async {
-      Message.all.map { msgs =>
-        Ok(views.html.index(msgs))
+      ChatServer.listRooms(user).map { rooms =>
+        Ok(views.html.index(rooms))
       }
     }
   }
 
-  def chat = WebSocket.async[JsValue] { implicit request =>
+  def room(roomName: String) = Authenticated { implicit user => implicit request =>
+    Async {
+      Message.all(roomName).map { msgs =>
+        Ok(views.html.room(roomName, msgs))
+      }
+    }
+  }
+
+
+  def chat(roomName: String) = WebSocket.async[JsValue] { implicit request =>
     authenticated[Future[(Iteratee[JsValue,_], Enumerator[JsValue])]] { user =>
-      Logger.debug(s"chat ($user)")
-      models.ChatRoom.join(user)
+      Logger("chat").debug(s"User $user connecting to chatroom $roomName")
+      ChatServer.join(roomName, user)
     }.flatMap(_.getOrElse { throw new java.lang.RuntimeException("Not authenticated") })
   }
 

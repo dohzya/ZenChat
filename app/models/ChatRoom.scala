@@ -1,7 +1,6 @@
 package models
 
-import akka.actor.{Actor, ActorSystem, Props}
-import akka.actor.{Actor, Props}
+import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import play.api.Play.current
@@ -13,33 +12,29 @@ import play.api.libs.json._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-import models._
+object ChatServer {
 
-object ChatRoom {
+  implicit val timeout = Timeout(5 second)
 
-  implicit val timeout = Timeout(1 second)
+  lazy val default: Room = Akka.system.actorOf(Props[ChatServer])
 
-  lazy val default = {
-    val roomActor = Akka.system.actorOf(Props[ChatRoom])
-    roomActor
-  }
+  def join(roomName: String, user: User): Future[(Iteratee[JsValue,_], Enumerator[JsValue])] = {
+    (default ? Join(roomName, user)).map {
 
-  def join(user: User): Future[(Iteratee[JsValue,_], Enumerator[JsValue])] = {
-    (default ? Join(user)).map {
-
-      case Connected(enumerator) =>
-        Logger.debug("$username is connected")
+      case Connected(room, enumerator) =>
+        Logger("chat.server").debug("$username is connected")
         // Create an Iteratee to consume the feed
         val iteratee = Iteratee.foreach[JsValue] { event =>
           // Put clever stuff here (commands, etc)
-          default ! Talk(user, (event \ "message").as[String])
+          Logger("chat.server").debug(s"Receive event: $event")
+          room ! Talk(user, (event \ "message").as[String])
         }.mapDone { _ =>
-          default ! Quit(user)
+          room ! Quit(user)
         }
         (iteratee, enumerator)
 
       case CannotConnect(error) =>
-        Logger.debug("$username is not connected ($error)")
+        Logger("chat.server").debug("$username is not connected ($error)")
         // Connection error
         // A finished Iteratee sending EOF
         val iteratee = Done[JsValue, Unit]((), Input.EOF)
@@ -50,21 +45,54 @@ object ChatRoom {
     }
   }
 
+  def listRooms(user: User): Future[Seq[String]] = {
+    (default ? ListRooms(user)).map {
+      case RoomList(list) => list
+    }
+  }
+
 }
 
-class ChatRoom extends Actor {
+class ChatServer extends Actor {
+
+  implicit val timeout = Timeout(5 second)
+
+  var rooms = Map.empty[String, Room]
+
+  def createRoom(name: String): Room = {
+    Akka.system.actorOf(Props(new ChatRoom(name)))
+  }
+
+  def receive = {
+    case Join(roomName, user) =>
+    Logger("chat.server").debug(s"User $user connecting to room $roomName")
+      val room = rooms.get(roomName).getOrElse {
+        val room = createRoom(roomName)
+        rooms = rooms + (roomName -> room)
+        room
+      }
+      room ! Join2(user, sender)
+    case ListRooms(user) =>
+      sender ! RoomList(rooms.keys.toSeq)
+  }
+
+}
+
+class ChatRoom(roomName: String) extends Actor {
+
+  implicit val timeout = Timeout(5 second)
 
   var members = Set.empty[User]
   val (chatEnumerator, chatChannel) = Concurrent.broadcast[JsValue]
 
   def receive = {
 
-    case Join(user) => {
+    case Join2(user, target) => {
       if(members.contains(user)) {
-        sender ! CannotConnect("You are already in this room")
+        target ! CannotConnect("You are already in this room")
       } else {
         members = members + user
-        sender ! Connected(chatEnumerator)
+        target ! Connected(self, chatEnumerator)
         self ! NotifyJoin(user)
       }
     }
@@ -85,9 +113,10 @@ class ChatRoom extends Actor {
   }
 
   def notifyAll(kind: String, text: String)(implicit user: User) {
+    Logger("chat.room."+roomName).debug(s"notifyAll($kind, $text)($user)")
     implicit val format = MessageJsonFormat
     // create the message…
-    val msg = Message(text)
+    val msg = Message(roomName, text)
     // then save it in DB…
     Message.insert(msg)
     // and broadcast it
@@ -96,10 +125,13 @@ class ChatRoom extends Actor {
 
 }
 
-case class Join(user: User)
+case class Join(room: String, user: User)  // When talking to server
+case class Join2(user: User, target: ActorRef)  // When server talk to room
 case class Quit(user: User)
 case class Talk(user: User, text: String)
 case class NotifyJoin(user: User)
+case class RoomList(rooms: Seq[String])
 
-case class Connected(enumerator:Enumerator[JsValue])
+case class ListRooms(user: User)
+case class Connected(roomName: Room, enumerator:Enumerator[JsValue])
 case class CannotConnect(msg: String)

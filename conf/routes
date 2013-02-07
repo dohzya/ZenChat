@@ -4,7 +4,8 @@
 
 # Home page
 GET     /                           controllers.Application.index
-GET     /chat                       controllers.Application.chat
+GET     /room/:room                 controllers.Application.room(room)
+GET     /chat/:room                 controllers.Application.chat(room)
 
 GET     /login                      controllers.Authentication.login
 GET     /oauth2callback             controllers.Authentication.oauth2callback
