@@ -7,11 +7,31 @@
   <header>
     <h1><a href="/">ZenChat</a></h1>
   </header>
-  <nav>
+  <section>
+    <h2>Choose a room</h2>
     <ul>@for(room <- rooms) {
       <li><a href="@routes.Application.room(room)">@room</a></li>
     }</ul>
-  </nav>
+    <h2>Or create a new one</h2>
+    <form id="form-create" action="/" method="GET">
+      <div class="input-append span10 offset1">
+        <input class="span11" name="text" id="input-create" autofocus="true" type="text">
+        <button class="btn" type="submit">Create!</button>
+      </div>
+    </form>
+    <script type="text/javascript">
+      $(function(){
+        $("#form-create").submit(function(e){
+          e.preventDefault();
+          var name = $("#input-create").val();
+          window.location = '@{
+            val tpl = "-ROOM-"
+            Html(routes.Application.room(tpl).toString.replaceAll(tpl, "'+name+'"))
+          }'
+        });
+      });
+    </script>
+  </section>
   <footer class="main-footer">
     <p>Copyright © 2013 All Rights</p>
   </footer>
