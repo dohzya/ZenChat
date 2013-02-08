@@ -1,27 +1,11 @@
 @(roomName: String, msgs: Seq[Message])(implicit lang: Lang, request: RequestHeader)
 
-@import presenters._
-
 @main("ZenChat") {
 
   <header>
     <h1><a href="/">ZenChat</a></h1>
   </header>
   <section id="messages" class="messages">
-  @for(msg <- msgs.map(MessagePresenter(_))) {
-    <article class="message" data-id="@msg.id">
-      <header>
-        <div class="nickname">@msg.author</div>
-        <div class="avatar"><img src="@msg.avatar" class="img-rounded" alt="@msg.author" /></div>
-      </header>
-      <section>
-        <p>@msg.text</p>
-      </section>
-      <footer>
-        <div class="time">@msg.date</div>
-      </footer>
-    </article>
-  }
   </section>
   <section class="input row-fluid">
     <form id="input-form" action="/messages" method="POST" autocomplete="off">
@@ -40,6 +24,12 @@
           var socket = new WS("@routes.Application.chat(roomName).webSocketURL()")
           window.ZenChat.initSocket("@roomName", socket);
           window.ZenChat.initAjaxPost();
+          @for(msg <- msgs) {
+            window.ZenChat.displayMessage(@{
+              implicit val format = models.MessageJsonFormat
+              Html(play.api.libs.json.Json.toJson(msg).toString)
+            });
+          }
       });
   </script>
 }
