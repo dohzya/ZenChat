@@ -18,7 +18,7 @@ object ChatServer {
 
   lazy val default: Room = Akka.system.actorOf(Props[ChatServer])
 
-  def join(roomName: String, user: User): Future[(Iteratee[JsValue,_], Enumerator[JsValue])] = {
+  def join(roomName: String)(implicit user: User): Future[(Iteratee[JsValue,_], Enumerator[JsValue])] = {
     (default ? Join(roomName, user)).map {
 
       case Connected(room, enumerator) =>
@@ -45,7 +45,7 @@ object ChatServer {
     }
   }
 
-  def listRooms(user: User): Future[Seq[String]] = {
+  def listRooms()(implicit user: User): Future[Seq[String]] = {
     (default ? ListRooms(user)).map {
       case RoomList(list) => list
     }

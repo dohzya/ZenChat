@@ -20,7 +20,7 @@ object Application extends Controller with Authentication {
 
   def index = Authenticated { implicit user => implicit request =>
     Async {
-      ChatServer.listRooms(user).map { rooms =>
+      ChatServer.listRooms().map { rooms =>
         Ok(views.html.index(rooms))
       }
     }
@@ -36,9 +36,9 @@ object Application extends Controller with Authentication {
 
 
   def chat(roomName: String) = WebSocket.async[JsValue] { implicit request =>
-    authenticated[Future[(Iteratee[JsValue,_], Enumerator[JsValue])]] { user =>
+    authenticated[Future[(Iteratee[JsValue,_], Enumerator[JsValue])]] { implicit user =>
       Logger("chat").debug(s"User $user connecting to chatroom $roomName")
-      ChatServer.join(roomName, user)
+      ChatServer.join(roomName)
     }.flatMap(_.getOrElse { throw new java.lang.RuntimeException("Not authenticated") })
   }
 
