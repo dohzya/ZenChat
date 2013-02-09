@@ -22,7 +22,7 @@ object ChatServer {
     (default ? Join(roomName, user)).map {
 
       case Connected(room, enumerator) =>
-        Logger("chat.server").debug("$username is connected")
+        Logger("chat.server").debug(s"$user is connected")
         // Create an Iteratee to consume the feed
         val iteratee = Iteratee.foreach[JsValue] { event =>
           // Put clever stuff here (commands, etc)
@@ -73,6 +73,7 @@ class ChatServer extends Actor {
       }
       forward(room, msg, sender)
     case ListRooms(user) =>
+      Logger("chat.server").debug(s"User $user is listing rooms")
       sender ! RoomList(rooms.keys.toSeq)
   }
 
