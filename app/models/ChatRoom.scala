@@ -51,6 +51,12 @@ object ChatServer {
     }
   }
 
+  def listUsers(roomName: String)(implicit user: User): Future[Set[User]] = {
+    (default ? ListUsers(user, roomName)).map {
+      case UserList(list) => list
+    }
+  }
+
 }
 
 class ChatServer extends Actor {
@@ -75,6 +81,12 @@ class ChatServer extends Actor {
     case ListRooms(user) =>
       Logger("chat.server").debug(s"User $user is listing rooms")
       sender ! RoomList(rooms.keys.toSeq)
+    case msg@ListUsers(user, roomName) =>
+      Logger("chat.server").debug(s"User $user is listing users on room $roomName")
+      rooms.get(roomName) match {
+        case Some(room) => forward(room, msg, sender)
+        case None => sender ! UserList(Set.empty)
+      }
   }
 
   def forward(target: ActorRef, msg: Any, sender: ActorRef) = {
@@ -119,6 +131,11 @@ class ChatRoom(roomName: String) extends Actor {
       notifyAll("info", "has left the room")(user)
     }
 
+    case ListUsers(user, _) => {
+      Logger("chat.room."+roomName).debug(s"Listing users")
+      sender ! UserList(members)
+    }
+
   }
 
   def notifyAll(kind: String, text: String)(implicit user: User) {
@@ -138,8 +155,10 @@ case class Join(roomName: String, user: User)
 case class Quit(user: User)
 case class Talk(user: User, text: String)
 case class NotifyJoin(user: User)
-case class RoomList(rooms: Seq[String])
+case class ListUsers(user: User, roomName: String)
+case class UserList(users: Set[User])
 
 case class ListRooms(user: User)
+case class RoomList(rooms: Seq[String])
 case class Connected(roomName: Room, enumerator:Enumerator[JsValue])
 case class CannotConnect(msg: String)

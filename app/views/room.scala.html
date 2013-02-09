@@ -1,10 +1,13 @@
-@(roomName: String, msgs: Seq[Message])(implicit lang: Lang, request: RequestHeader)
+@(roomName: String, msgs: Seq[Message], users: Set[User])(implicit lang: Lang, request: RequestHeader)
 
 @main("ZenChat") {
 
   <header>
     <h1><a href="/">ZenChat</a></h1>
   </header>
+  <section>
+    <p>Users: @users.toSeq.map(_.name).mkString(", ")</p>
+  </section>
   <section id="messages" class="messages">
   </section>
   <section class="input row-fluid">
