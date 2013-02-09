@@ -64,16 +64,24 @@ class ChatServer extends Actor {
   }
 
   def receive = {
-    case Join(roomName, user) =>
-    Logger("chat.server").debug(s"User $user connecting to room $roomName")
+    case msg@Join(roomName, user) =>
+      Logger("chat.server").debug(s"User $user is connecting to room $roomName")
       val room = rooms.get(roomName).getOrElse {
         val room = createRoom(roomName)
         rooms = rooms + (roomName -> room)
         room
       }
-      room ! Join2(user, sender)
+      forward(room, msg, sender)
     case ListRooms(user) =>
       sender ! RoomList(rooms.keys.toSeq)
+  }
+
+  def forward(target: ActorRef, msg: Any, sender: ActorRef) = {
+    Logger("chat.server").debug(s"=>: $target ! $msg")
+    (target ? msg).map{ resp =>
+      Logger("chat.server").debug(s"<= $sender ! $resp")
+      sender ! resp
+    }
   }
 
 }
@@ -87,12 +95,12 @@ class ChatRoom(roomName: String) extends Actor {
 
   def receive = {
 
-    case Join2(user, target) => {
+    case Join(_, user) => {
       if(members.contains(user)) {
-        target ! CannotConnect("You are already in this room")
+        sender ! CannotConnect("You are already in this room")
       } else {
         members = members + user
-        target ! Connected(self, chatEnumerator)
+        sender ! Connected(self, chatEnumerator)
         self ! NotifyJoin(user)
       }
     }
@@ -125,8 +133,7 @@ class ChatRoom(roomName: String) extends Actor {
 
 }
 
-case class Join(room: String, user: User)  // When talking to server
-case class Join2(user: User, target: ActorRef)  // When server talk to room
+case class Join(roomName: String, user: User)
 case class Quit(user: User)
 case class Talk(user: User, text: String)
 case class NotifyJoin(user: User)
