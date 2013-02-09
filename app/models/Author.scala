@@ -23,7 +23,7 @@ case class User(
   picture: Option[String],
   gender: String,
   birthday: Option[String],
-  locale: String
+  locale: Option[String]
 )
 
 object User {
@@ -58,7 +58,7 @@ object UserBsonHandler extends BSONReader[User] with BSONWriter[User] {
       picture = doc.getAs[BSONString]("picture").map(_.value),
       gender = doc.getAs[BSONString]("gender").get.value,
       birthday = doc.getAs[BSONString]("birthday").map(_.value),
-      locale = doc.getAs[BSONString]("locale").get.value
+      locale = doc.getAs[BSONString]("locale").map(_.value)
     )
   }
   def toBSON(o: User): BSONDocument = {
@@ -73,7 +73,7 @@ object UserBsonHandler extends BSONReader[User] with BSONWriter[User] {
       "picture" -> o.picture.map(BSONString(_)).getOrElse(BSONNull),
       "gender" -> BSONString(o.gender),
       "birthday" -> o.birthday.map(BSONString(_)).getOrElse(BSONNull),
-      "locale" -> BSONString(o.locale)
+      "locale" -> o.locale.map(BSONString(_)).getOrElse(BSONNull)
     )
   }
 }
@@ -90,7 +90,7 @@ object UserJsonFormat extends Format[User] {
     picture = (json \ "picture").asOpt[String],
     gender = (json \ "gender").as[String],
     birthday = (json \ "birthday").asOpt[String],
-    locale = (json \ "locale").as[String]
+    locale = (json \ "locale").asOpt[String]
   ))
   def writes(o: User): JsValue = Json.obj(
     "id" -> o.id,

@@ -191,7 +191,7 @@ object Authentication extends Controller {
     picture: Option[String],
     gender: String,
     birthday: Option[String],
-    locale: String
+    locale: Option[String]
   ) {
     def toUser = User(
       id = id,
