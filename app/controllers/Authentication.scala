@@ -188,7 +188,7 @@ object Authentication extends Controller {
     given_name: String,
     family_name: String,
     link: String,
-    picture: String,
+    picture: Option[String],
     gender: String,
     birthday: Option[String],
     locale: String

@@ -20,7 +20,7 @@ case class User(
   givenName: String,
   familyName: String,
   link: String,
-  picture: String,
+  picture: Option[String],
   gender: String,
   birthday: Option[String],
   locale: String
@@ -55,7 +55,7 @@ object UserBsonHandler extends BSONReader[User] with BSONWriter[User] {
       givenName = doc.getAs[BSONString]("givenName").get.value,
       familyName = doc.getAs[BSONString]("familyName").get.value,
       link = doc.getAs[BSONString]("link").get.value,
-      picture = doc.getAs[BSONString]("picture").get.value,
+      picture = doc.getAs[BSONString]("picture").map(_.value),
       gender = doc.getAs[BSONString]("gender").get.value,
       birthday = doc.getAs[BSONString]("birthday").map(_.value),
       locale = doc.getAs[BSONString]("locale").get.value
@@ -70,7 +70,7 @@ object UserBsonHandler extends BSONReader[User] with BSONWriter[User] {
       "givenName" -> BSONString(o.givenName),
       "familyName" -> BSONString(o.familyName),
       "link" -> BSONString(o.link),
-      "picture" -> BSONString(o.picture),
+      "picture" -> o.picture.map(BSONString(_)).getOrElse(BSONNull),
       "gender" -> BSONString(o.gender),
       "birthday" -> o.birthday.map(BSONString(_)).getOrElse(BSONNull),
       "locale" -> BSONString(o.locale)
@@ -87,7 +87,7 @@ object UserJsonFormat extends Format[User] {
     givenName = (json \ "givenName").as[String],
     familyName = (json \ "familyName").as[String],
     link = (json \ "link").as[String],
-    picture = (json \ "picture").as[String],
+    picture = (json \ "picture").asOpt[String],
     gender = (json \ "gender").as[String],
     birthday = (json \ "birthday").asOpt[String],
     locale = (json \ "locale").as[String]
