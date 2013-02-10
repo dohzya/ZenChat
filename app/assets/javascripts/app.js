@@ -19,7 +19,7 @@ window.ZenChat = (function($, markdown){
 
   ZC.displayMessage = function(msg) {
     var date = new Date(msg.date);
-    var text = markdown.toHTML(msg.text);
+    var text = markdown.toHTML(msg.text.replace(/^#/, ' #'));
     var fragment = '<article class="message" data-id="' + msg.id + '">' +
        '<header>' +
          '<div class="nickname">'+msg.author.name+'</div>' +
