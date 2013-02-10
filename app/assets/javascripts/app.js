@@ -1,4 +1,4 @@
-window.ZenChat = (function($){
+window.ZenChat = (function($, markdown){
   "use strict";
 
   var ZC = {
@@ -19,13 +19,14 @@ window.ZenChat = (function($){
 
   ZC.displayMessage = function(msg) {
     var date = new Date(msg.date);
+    var text = markdown.toHTML(msg.text);
     var fragment = '<article class="message" data-id="' + msg.id + '">' +
        '<header>' +
          '<div class="nickname">'+msg.author.name+'</div>' +
          '<div class="avatar"><img src="'+msg.author.picture+'" class="img-rounded" alt="'+msg.author.name+'" /></div>' +
        '</header>' +
        '<section>' +
-         '<p>'+msg.text+'</p>' +
+         '<p>'+text+'</p>' +
        '</section>' +
        '<footer>' +
          '<div class="time">'+date.getHours()+':'+date.getMinutes()+'</div>' +
@@ -52,4 +53,4 @@ window.ZenChat = (function($){
 
   ZC.init = function(){};
   return ZC;
-})(jQuery);
+})(jQuery, markdown);
