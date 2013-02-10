@@ -1,4 +1,4 @@
-window.ZenChat = (function(){
+window.ZenChat = (function($){
   "use strict";
 
   var ZC = {
@@ -52,4 +52,4 @@ window.ZenChat = (function(){
 
   ZC.init = function(){};
   return ZC;
-})();
+})(jQuery);
