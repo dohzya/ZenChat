@@ -15,7 +15,19 @@ window.ZenChat = (function($, markdown){
       });
       ZC.input.val("");
     });
+    ZC.scrollToBottom();
   };
+
+  ZC.scrollToBottom = function() {
+    window.scrollTo(0, $("body").height());
+    window.scrollBy(0, 1000);
+  }
+
+  ZC.scrollIfNeeded = function(f) {
+    var need = window.scrollY + $(window).height() - $("body").height() > 0;
+    f();
+    if (need) ZC.scrollToBottom();
+  }
 
   ZC.displayMessage = function(msg) {
     var date = new Date(msg.date);
@@ -32,7 +44,9 @@ window.ZenChat = (function($, markdown){
          '<div class="time">'+date.getHours()+':'+date.getMinutes()+'</div>' +
        '</footer>' +
      '</article>';
-    $("#messages").append(fragment);
+    ZC.scrollIfNeeded(function(){
+      $("#messages").append(fragment);
+    });
   };
 
   ZC.send = function(msg) {
