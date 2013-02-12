@@ -144,7 +144,7 @@ class ChatRoom(roomName: String) extends Actor {
     // create the message…
     val msg = Message(roomName, text)
     // then save it in DB…
-    Message.insert(msg)
+    if (kind == "message") Message.insert(msg)
     // and broadcast it
     chatChannel.push(Json.toJson(msg))
   }
