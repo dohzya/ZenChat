@@ -2,7 +2,9 @@ window.ZenChat = (function($, markdown){
   "use strict";
 
   var input = null,
-      socket = null;
+      socket = null,
+      notifications = null,
+      visibility = null;
 
   function initAjaxPost() {
     input = $("#input");
@@ -14,6 +16,61 @@ window.ZenChat = (function($, markdown){
       input.val("");
     });
     scrollToBottom();
+  }
+
+  function initVisibility() {
+    if (typeof document.hidden !== "undefined") {
+      visibility = {
+        hidden: "hidden",
+        visibilityChange: "visibilitychange",
+        state: "visibilityState"
+      };
+    } else if (typeof document.mozHidden !== "undefined") {
+      visibility = {
+        hidden: "mozHidden",
+        visibilityChange: "mozvisibilitychange",
+        state: "mozVisibilityState"
+      };
+    } else if (typeof document.msHidden !== "undefined") {
+      visibility = {
+        hidden: "msHidden",
+        visibilityChange: "msvisibilitychange",
+        state: "msVisibilityState"
+      };
+    } else if (typeof document.webkitHidden !== "undefined") {
+      visibility = {
+        hidden: "webkitHidden",
+        visibilityChange: "webkitvisibilitychange",
+        state: "webkitVisibilityState"
+      };
+    } else {
+      visibility = {};
+    }
+  }
+
+  function isBackground() {
+    if (!visibility) initVisibility();
+    return visibility.hidden && document[visibility.hidden];
+  }
+
+  function initNotifications() {
+    if (window.notifications) notifications = window.notifications;
+    else if (window.webkitNotifications) notifications = window.webkitNotifications;
+    else notifications = null;
+    if (notifications && notifications.checkPermission() !== 0) {
+      $("#allow-notifications").click(function(){
+        notifications.requestPermission();
+      });
+    } else {
+      $("#allow-notifications").hide();
+    }
+  }
+
+  function notifiy(icon, title, content) {
+    if (isBackground() && notifications && notifications.checkPermission() === 0) {
+      var notif = notifications.createNotification(icon, title, content);
+      notif.show();
+    }
   }
 
   function scrollToBottom() {
@@ -45,6 +102,7 @@ window.ZenChat = (function($, markdown){
     scrollIfNeeded(function(){
       $("#messages").append(fragment);
     });
+    notifiy('/assets/images/notif.png', msg.author.name, msg.text);
   }
 
   function send(msg) {
@@ -62,7 +120,9 @@ window.ZenChat = (function($, markdown){
     socket.onerror = function(event) {};
   }
 
-  function init(){}
+  function init(){
+    initNotifications();
+  }
 
   return {
     initAjaxPost: initAjaxPost,
