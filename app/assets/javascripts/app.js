@@ -1,35 +1,33 @@
 window.ZenChat = (function($, markdown){
   "use strict";
 
-  var ZC = {
-    input: null,
-    socket: null
-  };
+  var input = null,
+      socket = null;
 
-  ZC.initAjaxPost = function() {
-    ZC.input = $("#input");
+  function initAjaxPost() {
+    input = $("#input");
     $("#input-form").submit(function(e){
       e.preventDefault();
-      ZC.send({
-        "message": ZC.input.val()
+      send({
+        "message": input.val()
       });
-      ZC.input.val("");
+      input.val("");
     });
-    ZC.scrollToBottom();
-  };
+    scrollToBottom();
+  }
 
-  ZC.scrollToBottom = function() {
+  function scrollToBottom() {
     window.scrollTo(0, $("body").height());
     window.scrollBy(0, 1000);
   }
 
-  ZC.scrollIfNeeded = function(f) {
+  function scrollIfNeeded(f) {
     var need = window.scrollY + $(window).height() - $("body").height() > 0;
     f();
-    if (need) ZC.scrollToBottom();
+    if (need) scrollToBottom();
   }
 
-  ZC.displayMessage = function(msg) {
+  function displayMessage(msg) {
     var date = new Date(msg.date);
     var text = markdown.toHTML(msg.text.replace(/^#/, ' #'));
     var fragment = '<article class="message" data-id="' + msg.id + '">' +
@@ -44,27 +42,36 @@ window.ZenChat = (function($, markdown){
          '<div class="time">'+date.getHours()+':'+date.getMinutes()+'</div>' +
        '</footer>' +
      '</article>';
-    ZC.scrollIfNeeded(function(){
+    scrollIfNeeded(function(){
       $("#messages").append(fragment);
     });
-  };
-
-  ZC.send = function(msg) {
-    ZC.socket.send(JSON.stringify(msg));
   }
 
-  ZC.initSocket = function(roomName, socket) {
-    ZC.roomName = roomName;
-    ZC.socket = socket;
-    ZC.socket.onmessage = function(event) {
-      var msg = JSON.parse(event.data);
-      ZC.displayMessage(msg);
-    };
-    ZC.socket.onopen = function(event) {};
-    ZC.socket.onclose = function(event) {};
-    ZC.socket.onerror = function(event) {};
-  };
+  function send(msg) {
+    socket.send(JSON.stringify(msg));
+  }
 
-  ZC.init = function(){};
-  return ZC;
+  function initSocket(roomName, socket) {
+    roomName = roomName;
+    socket = socket;
+    socket.onmessage = function(event) {
+      var msg = JSON.parse(event.data);
+      displayMessage(msg);
+    };
+    socket.onopen = function(event) {};
+    socket.onclose = function(event) {};
+    socket.onerror = function(event) {};
+  }
+
+  function init(){}
+
+  return {
+    initAjaxPost: initAjaxPost,
+    scrollToBottom: scrollToBottom,
+    scrollIfNeeded: scrollIfNeeded,
+    displayMessage: displayMessage,
+    send: send,
+    initSocket: initSocket,
+    init: init
+  };
 })(jQuery, markdown);
