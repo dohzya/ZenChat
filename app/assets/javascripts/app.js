@@ -4,7 +4,8 @@ window.ZenChat = (function($, markdown){
   var input = null,
       socket = null,
       notifications = null,
-      visibility = null;
+      visibility = null,
+      notificationsAllowed = false;
 
   function initAjaxPost() {
     input = $("#input");
@@ -57,17 +58,21 @@ window.ZenChat = (function($, markdown){
     if (window.notifications) notifications = window.notifications;
     else if (window.webkitNotifications) notifications = window.webkitNotifications;
     else notifications = null;
-    if (notifications && notifications.checkPermission() !== 0) {
-      $("#allow-notifications").click(function(){
-        notifications.requestPermission();
+    if (notifications) {
+      var checkbox = $("#allow-notifications");
+      notificationsAllowed = (notifications.checkPermission() === 0);
+      checkbox.change(function(){
+        notificationsAllowed = checkbox.attr("checked");
+        if (notificationsAllowed) notifications.requestPermission();
       });
-    } else {
-      $("#allow-notifications").hide();
+    }
+    else {
+      $("#notifications-form").hide();
     }
   }
 
   function notifiy(icon, title, content) {
-    if (isBackground() && notifications && notifications.checkPermission() === 0) {
+    if (isBackground() && notificationsAllowed && notifications && notifications.checkPermission() === 0) {
       var notif = notifications.createNotification(icon, title, content);
       notif.show();
     }

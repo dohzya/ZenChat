@@ -4,7 +4,9 @@
 
   <header>
     <h1><a href="/">ZenChat</a></h1>
-    <button id="allow-notifications">allow notifications</button>
+    <form id="notifications-form" class="form-inline">
+      <label class="checkbox"><input id="allow-notifications" type="checkbox"> Notifications</label>
+    </form>
   </header>
   <section>
     <p>Users: @users.toSeq.map(_.name).mkString(", ")</p>
