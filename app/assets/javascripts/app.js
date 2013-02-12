@@ -51,9 +51,8 @@ window.ZenChat = (function($, markdown){
     socket.send(JSON.stringify(msg));
   }
 
-  function initSocket(roomName, socket) {
-    roomName = roomName;
-    socket = socket;
+  function initSocket(roomName, _socket) {
+    socket = _socket;
     socket.onmessage = function(event) {
       var msg = JSON.parse(event.data);
       displayMessage(msg);
