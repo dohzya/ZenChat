@@ -144,9 +144,7 @@ class ChatRoom(roomName: String) extends Actor {
   def notifyAll(msg: Message)(implicit user: User) {
     Logger("chat.room."+roomName).debug(s"notifyAll($msg)($user)")
     implicit val format = MessageJsonFormat
-    // then save it in DB…
-    if (msg._type == "message") Message.insert(msg)
-    // and broadcast it
+    Message.insert(msg)
     chatChannel.push(Json.toJson(msg))
   }
 

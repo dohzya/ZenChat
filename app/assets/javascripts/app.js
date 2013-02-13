@@ -91,7 +91,8 @@ window.ZenChat = (function($, markdown){
 
   function displayMessage(msg) {
     var date = new Date(msg.date);
-    var text = markdown.toHTML(msg.text.replace(/^#/, ' #'));
+    var text = (msg.type === 'info') ? (msg.author.name + ' ' + msg.text) : msg.text;
+    var text = markdown.toHTML(text.replace(/^#/, ' #'));
     var fragment = '<article class="'+ msg.type +'" data-id="' + msg.id + '">' +
        '<header>' +
          '<div class="nickname">'+msg.author.name+'</div>' +
