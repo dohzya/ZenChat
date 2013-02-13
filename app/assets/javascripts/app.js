@@ -90,19 +90,19 @@ window.ZenChat = (function($, markdown){
   }
 
   function displayMessage(msg) {
-    var date = new Date(msg.date);
-    var text = (msg.type === 'info') ? (msg.author.name + ' ' + msg.text) : msg.text;
-    var text = markdown.toHTML(text.replace(/^#/, ' #'));
+    msg.date = new Date(msg.date);
+    msg.text = (msg.type === 'info') ? (msg.author.name + ' ' + msg.text) : msg.text;
+    msg.text = markdown.toHTML(msg.text.replace(/^#/, ' #'));
     var fragment = '<article class="'+ msg.type +'" data-id="' + msg.id + '">' +
        '<header>' +
          '<div class="nickname">'+msg.author.name+'</div>' +
          '<div class="avatar"><img src="'+msg.author.picture+'" class="img-rounded" alt="'+msg.author.name+'" /></div>' +
        '</header>' +
        '<section>' +
-         '<p>'+text+'</p>' +
+         '<p>'+msg.text+'</p>' +
        '</section>' +
        '<footer>' +
-         '<div class="time">'+date.getHours()+':'+date.getMinutes()+'</div>' +
+         '<div class="time">'+msg.date.getHours()+':'+msg.date.getMinutes()+'</div>' +
        '</footer>' +
      '</article>';
     scrollIfNeeded(function(){
