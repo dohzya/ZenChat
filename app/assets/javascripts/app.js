@@ -92,7 +92,7 @@ window.ZenChat = (function($, markdown){
   function displayMessage(msg) {
     var date = new Date(msg.date);
     var text = markdown.toHTML(msg.text.replace(/^#/, ' #'));
-    var fragment = '<article class="message" data-id="' + msg.id + '">' +
+    var fragment = '<article class="'+ msg.type +'" data-id="' + msg.id + '">' +
        '<header>' +
          '<div class="nickname">'+msg.author.name+'</div>' +
          '<div class="avatar"><img src="'+msg.author.picture+'" class="img-rounded" alt="'+msg.author.name+'" /></div>' +
@@ -107,7 +107,7 @@ window.ZenChat = (function($, markdown){
     scrollIfNeeded(function(){
       $("#messages").append(fragment);
     });
-    notifiy('/assets/images/notif.png', msg.author.name, msg.text);
+    if (msg.type === "message") notifiy('/assets/images/notif.png', msg.author.name, msg.text);
   }
 
   function send(msg) {

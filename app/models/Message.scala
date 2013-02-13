@@ -17,6 +17,7 @@ import scala.util._
 
 case class Message(
   id: BSONObjectID = BSONObjectID.generate,
+  _type: String,
   author: User,
   roomName: String,
   text: String,
@@ -27,16 +28,13 @@ object Message {
   lazy val collection = db("messages")
   collection.createCapped(size = 100L, maxDocuments = Some(1000))
 
-  def apply(roomName: String, text: String)(implicit author: User): Message = {
+  def apply(_type: String, roomName: String, text: String)(implicit author: User): Message = {
     Message(
+      _type = _type,
       roomName = roomName,
       author = author,
       text = text
     )
-  }
-
-  def create(roomName: String, text: String)(implicit author: User): Future[Try[Unit]] = {
-    insert(Message(roomName, text))
   }
 
   def insert(msg: Message): Future[Try[Unit]] = {
@@ -70,6 +68,7 @@ object MessageBsonHandler extends BSONReader[Message] with BSONWriter[Message] {
     val doc = document.toTraversable
     Message(
       id = doc.getAs[BSONObjectID]("_id").get,
+      _type = doc.getAs[BSONString]("_type").map(_.value).getOrElse("message"),
       author = UserBsonHandler.fromBSON(doc.getAs[BSONDocument]("author").get),
       roomName = doc.getAs[BSONString]("roomName").get.value,
       text = doc.getAs[BSONString]("text").get.value,
@@ -79,6 +78,7 @@ object MessageBsonHandler extends BSONReader[Message] with BSONWriter[Message] {
   def toBSON(o: Message): BSONDocument = {
     BSONDocument(
       "_id" -> o.id,
+      "_type" -> BSONString(o._type),
       "author" -> UserBsonHandler.toBSON(o.author),
       "roomName" -> BSONString(o.roomName),
       "text" -> BSONString(o.text),
@@ -91,6 +91,7 @@ object MessageJsonFormat extends Format[Message] {
   def reads(json: JsValue) = UserJsonFormat.reads(json \ "author").flatMap { author =>
     JsSuccess(Message(
       id = BSONObjectID((json \ "id").as[String]),
+      _type = (json \ "type").as[String],
       author = author,
       roomName = (json \ "roomName").as[String],
       text = (json \ "text").as[String],
@@ -99,6 +100,7 @@ object MessageJsonFormat extends Format[Message] {
   }
   def writes(o: Message): JsValue = Json.obj(
     "id" -> o.id.stringify,
+    "type" -> o._type,
     "author" -> UserJsonFormat.writes(o.author),
     "roomName" -> o.roomName,
     "text" -> o.text,

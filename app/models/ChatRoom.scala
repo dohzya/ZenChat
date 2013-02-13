@@ -119,16 +119,19 @@ class ChatRoom(roomName: String) extends Actor {
     }
 
     case NotifyJoin(user) => {
-      notifyAll("info", "has entered the room")(user)
+      implicit val u = user
+      notifyAll(Message("info", roomName, "has entered the room"))(user)
     }
 
     case Talk(user, text) => {
-      notifyAll("message", text)(user)
+      implicit val u = user
+      notifyAll(Message("message", roomName, text))(user)
     }
 
     case Quit(user) => {
+      implicit val u = user
       members = members - user
-      notifyAll("info", "has left the room")(user)
+      notifyAll(Message("info", roomName, "has left the room"))(user)
     }
 
     case ListUsers(user, _) => {
@@ -138,13 +141,11 @@ class ChatRoom(roomName: String) extends Actor {
 
   }
 
-  def notifyAll(kind: String, text: String)(implicit user: User) {
-    Logger("chat.room."+roomName).debug(s"notifyAll($kind, $text)($user)")
+  def notifyAll(msg: Message)(implicit user: User) {
+    Logger("chat.room."+roomName).debug(s"notifyAll($msg)($user)")
     implicit val format = MessageJsonFormat
-    // create the message…
-    val msg = Message(roomName, text)
     // then save it in DB…
-    if (kind == "message") Message.insert(msg)
+    if (msg._type == "message") Message.insert(msg)
     // and broadcast it
     chatChannel.push(Json.toJson(msg))
   }
