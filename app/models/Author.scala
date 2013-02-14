@@ -12,7 +12,7 @@ import reactivemongo.bson.handlers._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 
-case class User(
+case class Author(
   id: String,
   email: String,
   verifiedEmail: Boolean,
@@ -26,28 +26,10 @@ case class User(
   locale: Option[String]
 )
 
-object User {
-  val db = ReactiveMongoPlugin.db
-  lazy val collection = db("users")
-
-  def findById(id: String): Future[Option[User]] = {
-    val query = BSONDocument("id" -> BSONString(id))
-    implicit val handler = UserBsonHandler
-    collection.find[User](QueryBuilder(queryDoc = Some(query))).headOption
-  }
-
-  def findByName(name: String): Future[Option[User]] = {
-    val query = BSONDocument("name" -> BSONString(name))
-    implicit val handler = UserBsonHandler
-    collection.find[User](QueryBuilder(queryDoc = Some(query))).headOption
-  }
-
-}
-
-object UserBsonHandler extends BSONReader[User] with BSONWriter[User] {
-  def fromBSON(document: BSONDocument): User = {
+object AuthorBsonHandler extends BSONReader[Author] with BSONWriter[Author] {
+  def fromBSON(document: BSONDocument): Author = {
     val doc = document.toTraversable
-    User(
+    Author(
       id = doc.getAs[BSONString]("id").get.value,
       email = doc.getAs[BSONString]("email").get.value,
       verifiedEmail = doc.getAs[BSONBoolean]("verifiedEmail").get.value,
@@ -61,7 +43,7 @@ object UserBsonHandler extends BSONReader[User] with BSONWriter[User] {
       locale = doc.getAs[BSONString]("locale").map(_.value)
     )
   }
-  def toBSON(o: User): BSONDocument = {
+  def toBSON(o: Author): BSONDocument = {
     BSONDocument(
       "id" -> BSONString(o.id),
       "email" -> BSONString(o.email),
@@ -78,8 +60,8 @@ object UserBsonHandler extends BSONReader[User] with BSONWriter[User] {
   }
 }
 
-object UserJsonFormat extends Format[User] {
-  def reads(json: JsValue) = JsSuccess(User(
+object AuthorJsonFormat extends Format[Author] {
+  def reads(json: JsValue) = JsSuccess(Author(
     id = (json \ "id").as[String],
     email = (json \ "email").as[String],
     verifiedEmail = (json \ "verifiedEmail").as[Boolean],
@@ -92,7 +74,7 @@ object UserJsonFormat extends Format[User] {
     birthday = (json \ "birthday").asOpt[String],
     locale = (json \ "locale").asOpt[String]
   ))
-  def writes(o: User): JsValue = Json.obj(
+  def writes(o: Author): JsValue = Json.obj(
     "id" -> o.id,
     "email" -> o.email,
     "verifiedEmail" -> o.verifiedEmail,

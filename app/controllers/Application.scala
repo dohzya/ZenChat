@@ -30,8 +30,8 @@ object Application extends Controller with Authentication {
     Async {
       for {
         msgs <- Message.all(roomName)
-        users <- ChatServer.listUsers(roomName)
-      } yield Ok(views.html.room(roomName, msgs, users))
+        authors <- ChatServer.listAuthors(roomName)
+      } yield Ok(views.html.room(roomName, msgs, authors))
     }
   }
 

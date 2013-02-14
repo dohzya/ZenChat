@@ -57,6 +57,12 @@ object ChatServer {
     }
   }
 
+  def listAuthors(roomName: String)(implicit user: User): Future[Set[Author]] = {
+    (default ? ListUsers(user, roomName)).map {
+      case UserList(list) => list.map(_.author)
+    }
+  }
+
 }
 
 class ChatServer extends Actor {

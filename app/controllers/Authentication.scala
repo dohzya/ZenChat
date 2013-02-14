@@ -14,7 +14,7 @@ import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util._
 
-import models.User
+import models._
 
 trait Authentication {
 
@@ -23,11 +23,10 @@ trait Authentication {
       case Some(token) =>
         Logger("oauth2.Authenticated").debug(s"Token: $token")
         Results.Async {
-          Authentication.getProfile(token).map {
-            case Success(profile) =>
-              f(profile.toUser)(request)
-            case Failure(Authentication.OAuthErrorResult(errorResult)) => errorResult
-            case Failure(error) => Results.InternalServerError("Internal Error")
+          Authentication.getProfile(token).flatMap {
+            case Success(profile) => profile.toUser.map { user => f(user)(request) }
+            case Failure(Authentication.OAuthErrorResult(errorResult)) => Future { errorResult }
+            case Failure(error) => Future { Results.InternalServerError("Internal Error") }
           }
         }
       case None => Results.Redirect(Authentication.connectionURL)
@@ -37,9 +36,9 @@ trait Authentication {
   def authenticated[A](f: User => A)(implicit request: RequestHeader): Future[Option[A]] = {
     Authentication.TokenResponse.fromSession(request.session) match {
       case Some(token) =>
-        Authentication.getProfile(token).map {
-          case Success(profile) => Some(f(profile.toUser))
-          case _ => None
+        Authentication.getProfile(token).flatMap {
+          case Success(profile) => profile.toUser.map { user => Some(f(user)) }
+          case _ => Future { None }
         }
       case None => Future { None }
     }
@@ -193,19 +192,21 @@ object Authentication extends Controller {
     birthday: Option[String],
     locale: Option[String]
   ) {
-    def toUser = User(
-      id = id,
-      email = email,
-      verifiedEmail = verified_email,
-      name = name,
-      givenName = given_name,
-      familyName = family_name,
-      link = link,
-      picture = picture,
-      gender = gender,
-      birthday = birthday,
-      locale = locale
-    )
+    def toUser: Future[User] = {
+      User.createOrMerge(Author(
+        id = id,
+        email = email,
+        verifiedEmail = verified_email,
+        name = name,
+        givenName = given_name,
+        familyName = family_name,
+        link = link,
+        picture = picture,
+        gender = gender,
+        birthday = birthday,
+        locale = locale
+      ))
+    }
   }
   implicit val profileFormat = Json.format[Profile]
   def getProfile(token: TokenResponse): Future[Try[Profile]] = getProfile(token.accessToken)

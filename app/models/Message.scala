@@ -18,7 +18,7 @@ import scala.util._
 case class Message(
   id: BSONObjectID = BSONObjectID.generate,
   _type: String,
-  author: User,
+  author: Author,
   roomName: String,
   text: String,
   date: DateTime = DateTime.now
@@ -28,11 +28,11 @@ object Message {
   lazy val collection = db("messages")
   collection.createCapped(size = 100L, maxDocuments = Some(1000))
 
-  def apply(_type: String, roomName: String, text: String)(implicit author: User): Message = {
+  def apply(_type: String, roomName: String, text: String)(implicit user: User): Message = {
     Message(
       _type = _type,
       roomName = roomName,
-      author = author,
+      author = user.author,
       text = text
     )
   }
@@ -69,7 +69,7 @@ object MessageBsonHandler extends BSONReader[Message] with BSONWriter[Message] {
     Message(
       id = doc.getAs[BSONObjectID]("_id").get,
       _type = doc.getAs[BSONString]("_type").map(_.value).getOrElse("message"),
-      author = UserBsonHandler.fromBSON(doc.getAs[BSONDocument]("author").get),
+      author = AuthorBsonHandler.fromBSON(doc.getAs[BSONDocument]("author").get),
       roomName = doc.getAs[BSONString]("roomName").get.value,
       text = doc.getAs[BSONString]("text").get.value,
       date = new DateTime(doc.getAs[BSONDateTime]("date").get.value)
@@ -79,7 +79,7 @@ object MessageBsonHandler extends BSONReader[Message] with BSONWriter[Message] {
     BSONDocument(
       "_id" -> o.id,
       "_type" -> BSONString(o._type),
-      "author" -> UserBsonHandler.toBSON(o.author),
+      "author" -> AuthorBsonHandler.toBSON(o.author),
       "roomName" -> BSONString(o.roomName),
       "text" -> BSONString(o.text),
       "date" -> BSONDateTime(o.date.getMillis)
@@ -88,7 +88,7 @@ object MessageBsonHandler extends BSONReader[Message] with BSONWriter[Message] {
 }
 
 object MessageJsonFormat extends Format[Message] {
-  def reads(json: JsValue) = UserJsonFormat.reads(json \ "author").flatMap { author =>
+  def reads(json: JsValue) = AuthorJsonFormat.reads(json \ "author").flatMap { author =>
     JsSuccess(Message(
       id = BSONObjectID((json \ "id").as[String]),
       _type = (json \ "type").as[String],
@@ -101,7 +101,7 @@ object MessageJsonFormat extends Format[Message] {
   def writes(o: Message): JsValue = Json.obj(
     "id" -> o.id.stringify,
     "type" -> o._type,
-    "author" -> UserJsonFormat.writes(o.author),
+    "author" -> AuthorJsonFormat.writes(o.author),
     "roomName" -> o.roomName,
     "text" -> o.text,
     "date" -> Json.toJson(o.date)
