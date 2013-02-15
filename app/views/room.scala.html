@@ -30,7 +30,7 @@
           var socket = new WS("@routes.Application.chat(roomName).webSocketURL()")
           window.ZenChat.initSocket("@roomName", socket);
           window.ZenChat.initAjaxPost();
-          @for(msg <- msgs) {
+          @for(msg <- msgs if msg._type == "message") {
             window.ZenChat.displayMessage(@{
               implicit val format = models.MessageJsonFormat
               Html(play.api.libs.json.Json.toJson(msg).toString)
