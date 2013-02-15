@@ -94,21 +94,14 @@ object UserBsonHandler extends BSONReader[User] with BSONWriter[User] {
     BSONDocument(
       "_id" -> o.id,
       "author" -> AuthorBsonHandler.toBSON(o.author),
+      "settings" -> SettingsBsonHandler.toBSON(o.settings),
       "createdAt" -> BSONDateTime(o.createdAt.getMillis),
       "lastActivityAt" -> BSONDateTime(o.lastActivityAt.getMillis)
     )
   }
 }
 
-object UserJsonFormat extends Format[User] {
-  def reads(json: JsValue) = AuthorJsonFormat.reads(json \ "author").flatMap { author =>
-    JsSuccess(User(
-      id = BSONObjectID((json \ "id").as[String]),
-      author = author,
-      createdAt = (json \ "createdAt").as[DateTime],
-      lastActivityAt = (json \ "lastActivityAt").as[DateTime]
-    ))
-  }
+object UserJsonWrite extends Writes[User] {
   def writes(o: User): JsValue = Json.obj(
     "id" -> o.id.stringify,
     "author" -> AuthorJsonFormat.writes(o.author),
