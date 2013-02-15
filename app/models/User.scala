@@ -17,6 +17,7 @@ import scala.concurrent._
 case class User(
   id: BSONObjectID,
   author: Author,
+  settings: Settings,
   createdAt: DateTime,
   lastActivityAt : DateTime
 )
@@ -36,6 +37,7 @@ object User {
     User(
       id = BSONObjectID.generate,
       author = author,
+      settings = Settings(),
       createdAt = DateTime.now,
       lastActivityAt = DateTime.now
     )
@@ -43,6 +45,7 @@ object User {
 
   def merge(oldUser: User, newUser: User): Future[User] = {
     val mergedUser = newUser.copy(
+      settings = oldUser.settings,
       createdAt = oldUser.createdAt,
       lastActivityAt = oldUser.lastActivityAt
     )
@@ -90,6 +93,7 @@ object UserBsonHandler extends BSONReader[User] with BSONWriter[User] {
     User(
       id = doc.getAs[BSONObjectID]("_id").get,
       author = AuthorBsonHandler.fromBSON(doc.getAs[BSONDocument]("author").get),
+      settings = doc.getAs[BSONDocument]("settings").map(SettingsBsonHandler.fromBSON(_)).getOrElse(Settings()),
       createdAt = new DateTime(doc.getAs[BSONDateTime]("createdAt").get.value),
       lastActivityAt = new DateTime(doc.getAs[BSONDateTime]("lastActivityAt").get.value)
     )
