@@ -42,7 +42,11 @@ object User {
   }
 
   def merge(oldUser: User, newUser: User): Future[User] = {
-    Future { newUser }  // FIXME
+    val mergedUser = newUser.copy(
+      createdAt = oldUser.createdAt,
+      lastActivityAt = oldUser.lastActivityAt
+    )
+    Future { mergedUser }  // FIXME
   }
 
   def createOrMerge(author: Author): Future[User] = {
